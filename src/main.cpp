@@ -13,6 +13,27 @@ void printAdvertisementData(const uint8_t* data, int length) {
   Serial.println();
 }
 
+// Función para formatear la dirección MAC
+String formatMacAddress(const String& macAddress) {
+    String formattedMac = macAddress;
+    formattedMac.replace(":", "");  // Elimina los dos puntos
+    formattedMac.toUpperCase();      // Convierte a mayúsculas
+    return formattedMac;
+}
+
+// Función para convertir datos de publicidad a una cadena hexadecimal
+String convertToHexString(const uint8_t* data, int length) {
+    String hexString;
+    for (int i = 0; i < length; i++) {
+        if (data[i] < 16) {
+            hexString += '0';  // Agrega un 0 delante para valores menores a 16
+        }
+        hexString += String(data[i], HEX);  // Convierte a hexadecimal
+    }
+    hexString.toUpperCase();  // Convierte a mayúsculas
+    return hexString;
+}
+
 void setup() {
   Serial.begin(115200);
   while (!Serial);
@@ -42,7 +63,8 @@ void loop() {
         doc["timestamp"] = timestamp;
 
         // Add MAC address
-        doc["mac"] = peripheral.address();
+        String macAddress = peripheral.address();
+        doc["mac"] = formatMacAddress(macAddress);  // Formatea la dirección MAC
 
         // Add Local Name
         if (peripheral.hasLocalName()) {
@@ -66,10 +88,7 @@ void loop() {
         doc["advertisement_data_length"] = adLength;
 
         if (adLength > 0) {
-            JsonArray adData = doc.createNestedArray("advertisement_data");
-            for (int i = 0; i < adLength; i++) {
-                adData.add(advertisement[i]);
-            }
+            doc["advertisement_data"] = convertToHexString(advertisement, adLength);
         } else {
             doc["advertisement_data"] = "No advertisement data available";
         }
