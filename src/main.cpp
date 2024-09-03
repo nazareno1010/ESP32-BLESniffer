@@ -2,6 +2,7 @@
 #include "ExtendedBLEDevice.h"
 #include <ArduinoJson.h>
 #include <TimeLib.h>
+#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
 
 void printAdvertisementData(const uint8_t* data, int length) {
   Serial.print("Raw data: ");
@@ -37,6 +38,20 @@ String convertToHexString(const uint8_t* data, int length) {
 void setup() {
   Serial.begin(115200);
   while (!Serial);
+
+  // Connect to WiFi with WiFiManager
+  WiFiManager wm;
+  bool res;
+  res = wm.autoConnect("Nazareno","password"); // password protected ap
+
+  if(!res) {
+      Serial.println("Failed to connect");
+      // ESP.restart();
+  } 
+  else {
+      //if you get here you have connected to the WiFi    
+      Serial.println("Connected)");
+  } 
 
   if (!BLE.begin()) {
     Serial.println("starting BLE failed!");
