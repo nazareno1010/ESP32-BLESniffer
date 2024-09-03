@@ -31,6 +31,7 @@ void loop() {
 
     if (device) {
       ExtendedBLEDevice peripheral(device);
+
         // Create a JSON object
         StaticJsonDocument<256> doc;
 
@@ -51,26 +52,27 @@ void loop() {
         // Add RSSI
         doc["rssi"] = peripheral.rssi();
 
-        // Add UUID
+        // Add Service UUIDs
         if (peripheral.hasAdvertisedServiceUuid()) {
-
-          doc["uuid"] = peripheral.rssi(); // Needed for update
-
-          for (int i = 0; i < peripheral.advertisedServiceUuidCount(); i++) {
-            Serial.print(peripheral.advertisedServiceUuid(i));
-            Serial.print(" ");
-          }
-          Serial.println();
+            JsonArray uuids = doc.createNestedArray("service_uuids");
+            for (int i = 0; i < peripheral.advertisedServiceUuidCount(); i++) {
+                uuids.add(peripheral.advertisedServiceUuid(i));
+            }
         }
 
-        // Add raw data
-        String rawData = "";
-        for (int i = 0; i < peripheral.advertisementDataLength(); i++) {
-            char hexByte[3];
-            snprintf(hexByte, sizeof(hexByte), "%02X", peripheral.advertisementData()[i]);
-            rawData += String(hexByte) + " ";
+        // Add Advertisement Data
+        uint8_t advertisement[62] = {0};  // Increased buffer size
+        int adLength = peripheral.getAdvertisement(advertisement, sizeof(advertisement));
+        doc["advertisement_data_length"] = adLength;
+
+        if (adLength > 0) {
+            JsonArray adData = doc.createNestedArray("advertisement_data");
+            for (int i = 0; i < adLength; i++) {
+                adData.add(advertisement[i]);
+            }
+        } else {
+            doc["advertisement_data"] = "No advertisement data available";
         }
-        doc["rawData"] = rawData;
 
         // Serialize JSON to Serial
         serializeJson(doc, Serial);
@@ -79,51 +81,4 @@ void loop() {
 
     // Maintain BLE scanning
     BLE.poll();
-}
-
-void loop() {
-  BLEDevice device = BLE.available();
-  
-  if (device) {
-    ExtendedBLEDevice peripheral(device);
-    
-    Serial.println("\nDiscovered a peripheral");
-    Serial.println("-----------------------");
-    
-    Serial.print("Address: ");
-    Serial.println(peripheral.address());
-    
-    
-    if (peripheral.hasLocalName()) {
-      Serial.print("Local Name: ");
-      Serial.println(peripheral.localName());
-    }
-    
-    if (peripheral.hasAdvertisedServiceUuid()) {
-      Serial.print("Service UUIDs: ");
-      for (int i = 0; i < peripheral.advertisedServiceUuidCount(); i++) {
-        Serial.print(peripheral.advertisedServiceUuid(i));
-        Serial.print(" ");
-      }
-      Serial.println();
-    }
-    
-    Serial.print("RSSI: ");
-    Serial.println(peripheral.rssi());
-    
-    uint8_t advertisement[62] = {0};  // Increased buffer size
-    int adLength = peripheral.getAdvertisement(advertisement, sizeof(advertisement));
-    
-    Serial.print("Advertisement data length: ");
-    Serial.println(adLength);
-    
-    if (adLength > 0) {
-      printAdvertisementData(advertisement, adLength);
-    } else {
-      Serial.println("No advertisement data available");
-    }
-    
-    Serial.println();
-    delay(1000);  // Add a small delay to avoid flooding the serial output
-  }
 }
