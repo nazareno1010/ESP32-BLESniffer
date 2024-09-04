@@ -192,6 +192,13 @@ time_t prevDisplay = 0; // when the digital clock was displayed
 
 void loop() {
 
+    if (timeStatus() != timeNotSet) {
+    if (now() != prevDisplay) { //update the display only if time has changed
+      prevDisplay = now();
+      digitalClockDisplay();
+    }
+    }
+
     BLEDevice device = BLE.available();
 
     if (device) {
