@@ -7,4 +7,4 @@ const char *mqtt_username = "emqx";
 const char *mqtt_password = "public";
 const int mqtt_port = 1883;
 
-// Test for broker
+// Test 2 for broker
