@@ -5,6 +5,8 @@
 #include <WiFi.h>
 #include "utilities.h"
 #include "ExtendedBLEDevice.h"
+#include <PubSubClient.h>
+#include "mqtt.h"
 
 void setup() {
     Serial.begin(115200);
@@ -80,6 +82,11 @@ void loop() {
         serializeJson(doc, Serial);
         Serial.println();
     }
+
+    if (!mqtt_client.connected()) {
+        connectToMQTT();
+    }
+    mqtt_client.loop();
 
     BLE.poll();
 }
