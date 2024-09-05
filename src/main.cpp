@@ -8,50 +8,14 @@
 
 // NTP Servers:
 static const char ntpServerName[] = "us.pool.ntp.org";
-//static const char ntpServerName[] = "time.nist.gov";
-//static const char ntpServerName[] = "time-a.timefreq.bldrdoc.gov";
-//static const char ntpServerName[] = "time-b.timefreq.bldrdoc.gov";
-//static const char ntpServerName[] = "time-c.timefreq.bldrdoc.gov";
 
-const int timeZone = -3;     // UTC -3
-//const int timeZone = 1;     // Central European Time
-//const int timeZone = -5;  // Eastern Standard Time (USA)
-//const int timeZone = -4;  // Eastern Daylight Time (USA)
-//const int timeZone = -8;  // Pacific Standard Time (USA)
-//const int timeZone = -7;  // Pacific Daylight Time (USA)
-
+const int timeZone = -3;     // Argentina Standard Time (UTC -3)
 
 WiFiUDP Udp;
 unsigned int localPort = 8888;  // local port to listen for UDP packets
 
 time_t getNtpTime();
-void digitalClockDisplay();
-void printDigits(int digits);
 void sendNTPpacket(IPAddress &address);
-
-void digitalClockDisplay()
-{
-  // digital clock display of the time
-  Serial.print(hour());
-  printDigits(minute());
-  printDigits(second());
-  Serial.print(" ");
-  Serial.print(day());
-  Serial.print(".");
-  Serial.print(month());
-  Serial.print(".");
-  Serial.print(year());
-  Serial.println();
-}
-
-void printDigits(int digits)
-{
-  // utility for digital clock display: prints preceding colon and leading 0
-  Serial.print(":");
-  if (digits < 10)
-    Serial.print('0');
-  Serial.print(digits);
-}
 
 /*-------- NTP code ----------*/
 
@@ -191,21 +155,13 @@ void setup() {
 time_t prevDisplay = 0; // when the digital clock was displayed
 
 void loop() {
-
-    if (timeStatus() != timeNotSet) {
-    if (now() != prevDisplay) { //update the display only if time has changed
-      prevDisplay = now();
-      digitalClockDisplay();
-    }
-    }
-
     BLEDevice device = BLE.available();
 
     if (device) {
-      ExtendedBLEDevice peripheral(device);
+        ExtendedBLEDevice peripheral(device);
 
         // Create a JSON object
-        StaticJsonDocument<256> doc;
+        JsonDocument doc;  // Changed from StaticJsonDocument<256> to JsonDocument
 
         // Add timestamp
         char timestamp[25];
@@ -215,11 +171,11 @@ void loop() {
 
         // Add MAC address
         String macAddress = peripheral.address();
-        doc["mac"] = formatMacAddress(macAddress);  // Formatea la dirección MAC
+        doc["mac"] = formatMacAddress(macAddress);
 
         // Add Local Name
         if (peripheral.hasLocalName()) {
-          doc["localname"] = peripheral.address();
+            doc["localname"] = peripheral.address();
         }
 
         // Add RSSI
@@ -227,14 +183,14 @@ void loop() {
 
         // Add Service UUIDs
         if (peripheral.hasAdvertisedServiceUuid()) {
-            JsonArray uuids = doc.createNestedArray("service_uuids");
+            JsonArray uuids = doc["service_uuids"].to<JsonArray>();  // Changed from createNestedArray
             for (int i = 0; i < peripheral.advertisedServiceUuidCount(); i++) {
                 uuids.add(peripheral.advertisedServiceUuid(i));
             }
         }
 
         // Add Advertisement Data
-        uint8_t advertisement[62] = {0};  // Increased buffer size
+        uint8_t advertisement[62] = {0};
         int adLength = peripheral.getAdvertisement(advertisement, sizeof(advertisement));
         doc["advertisement_data_length"] = adLength;
 

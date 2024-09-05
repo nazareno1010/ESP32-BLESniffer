@@ -1,0 +1,24 @@
+{
+	"folders": [
+		{
+			"path": "../../../iot"
+		},
+		{
+			"name": "Scan",
+			"path": "../../../iot/BLE/Scan"
+		},
+		{
+			"name": "BLE",
+			"path": "."
+		},
+		{
+			"name": "MQTT",
+			"path": "../../../iot/MQTT"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"cstdint": "cpp"
+		}
+	}
+}
