@@ -8,6 +8,8 @@
 #include <PubSubClient.h>
 #include "mqtt.h"
 
+// Needed to add blacklist, rssi parameter, mqtt credentials, time limit
+
 void setup() {
     Serial.begin(115200);
     while (!Serial);
@@ -55,6 +57,7 @@ void loop() {
         ExtendedBLEDevice peripheral(device);
 
         JsonDocument doc;
+
         char timestamp[25];
         snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02dT%02d:%02d:%02d.000Z",
                  year(), month(), day(), hour(), minute(), second());
@@ -84,14 +87,16 @@ void loop() {
             doc["advertisement_data"] = "No advertisement data available";
         }
 
-        serializeJson(doc, Serial);
-        Serial.println();
-    }
+        String jsonString;
+        serializeJson(doc, jsonString);
 
-    if (!mqtt_client.connected()) {
-        connectToMQTT();
-    }
-    mqtt_client.loop();
+        if (!mqtt_client.connected()) {
+            connectToMQTT();
+        }
+        mqtt_client.loop();
 
-    BLE.poll();
+        mqtt_client.publish(mqtt_topic, jsonString.c_str());
+
+        BLE.poll();
+    }
 }
