@@ -24,6 +24,11 @@ void setup() {
         Serial.println("Connected to WiFi");
     }
 
+    mqtt_client.setServer(mqtt_broker, mqtt_port);
+    mqtt_client.setKeepAlive(60);
+    mqtt_client.setCallback(mqttCallback); // Corrected callback function name
+    connectToMQTT();
+
     Serial.print("IP number assigned by DHCP is ");
     Serial.println(WiFi.localIP());
     Serial.println("Starting UDP");

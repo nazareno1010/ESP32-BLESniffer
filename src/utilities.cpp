@@ -46,7 +46,7 @@ void connectToMQTT() {
         if (mqtt_client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
             Serial.println("Connected to MQTT broker");
             mqtt_client.subscribe(mqtt_topic);
-            mqtt_client.publish(mqtt_topic, "Hi EMQX I'm ESP32 ^^"); // Publish message upon successful connection
+            mqtt_client.publish(mqtt_topic, "Hi Pablo, I'm ESP32 ^.^"); // Publish message upon successful connection
         } else {
             Serial.print("Failed, rc=");
             Serial.print(mqtt_client.state());
