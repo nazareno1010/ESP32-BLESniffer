@@ -1,11 +1,12 @@
-#include <ArduinoBLE.h>
-#include <ArduinoJson.h>
-#include <TimeLib.h>
 #include <WiFiManager.h>
 #include <WiFi.h>
-#include "utilities.h"
-#include "ExtendedBLEDevice.h"
 #include <PubSubClient.h>
+#include <ArduinoBLE.h>
+#include <TimeLib.h>
+#include <ArduinoJson.h>
+
+#include "ExtendedBLEDevice.h"
+#include "utilities.h"
 #include "mqtt.h"
 
 // Needed to add blacklist, rssi parameter, mqtt credentials, time limit
@@ -14,6 +15,7 @@ void setup() {
     Serial.begin(115200);
     while (!Serial);
 
+    // Connect to WiFi using WiFiManager
     WiFiManager wm;
     String SSID = "ESP32-" + getMAC();
     bool connected = wm.autoConnect(SSID.c_str(), "password");
@@ -26,31 +28,28 @@ void setup() {
         Serial.println("Connected to WiFi");
     }
 
-    mqtt_client.setServer(mqtt_broker, mqtt_port);
-    mqtt_client.setKeepAlive(60);
-    mqtt_client.setCallback(mqttCallback); // Corrected callback function name
-    connectToMQTT();
-
-    Serial.print("IP number assigned by DHCP is ");
-    Serial.println(WiFi.localIP());
     Serial.println("Starting UDP");
     Udp.begin(localPort);
-    Serial.print("Local port: ");
-    Serial.println(localPort);
     Serial.println("waiting for sync");
     setSyncProvider(getNtpTime);
     setSyncInterval(300);
+    
+    // Connect to MQTT using PubSubClient
+    mqtt_client.setServer(mqtt_broker, mqtt_port);
+    mqtt_client.setKeepAlive(60);
+    mqtt_client.setCallback(mqttCallback);
+    connectToMQTT();
 
+    // Connect to BLE using ArduinoBLE
     if (!BLE.begin()) {
-        Serial.println("starting BLE failed!");
         while (1);
     }
-
-    Serial.println("BLE Central scan");
     BLE.scan();
+
 }
 
 void loop() {
+
     BLEDevice device = BLE.available();
 
     if (device) {
@@ -64,9 +63,9 @@ void loop() {
         doc["timestamp"] = timestamp;
         doc["mac"] = formatMacAddress(peripheral.address());
 
-        if (peripheral.hasLocalName()) {
-            doc["localname"] = peripheral.address();
-        }
+        // if (peripheral.hasLocalName()) {
+        //     doc["localname"] = peripheral.address();
+        // }
 
         doc["rssi"] = peripheral.rssi();
 
@@ -79,17 +78,19 @@ void loop() {
 
         uint8_t advertisement[62] = {0};
         int adLength = peripheral.getAdvertisement(advertisement, sizeof(advertisement));
-        doc["advertisement_data_length"] = adLength;
+        // doc["advertisement_data_length"] = adLength;
 
         if (adLength > 0) {
-            doc["advertisement_data"] = convertToHexString(advertisement, adLength);
-        } else {
-            doc["advertisement_data"] = "No advertisement data available";
-        }
+            doc["rawData"] = convertToHexString(advertisement, adLength);
+        } // else {
+        //     doc["advertisement_data"] = "No advertisement data available";
+        // }
 
         String jsonString;
         serializeJson(doc, jsonString);
 
+
+        // Connect to MQTT Broker
         if (!mqtt_client.connected()) {
             connectToMQTT();
         }
@@ -97,6 +98,7 @@ void loop() {
 
         mqtt_client.publish(mqtt_topic, jsonString.c_str());
 
+        // Continue BLE Scan
         BLE.poll();
     }
 }
