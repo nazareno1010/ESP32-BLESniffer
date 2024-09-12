@@ -4,5 +4,5 @@
 .vscode/launch.json
 .vscode/ipch
 
-# MQTT Broker credentials
+# MQTT Broker credentials...
 src/mqtt.cpp
